@@ -754,7 +754,7 @@ def main():
                         player, enemies, road_scroll_y, score, level, spawn_timer, next_spawn_delay, is_game_over = start_game()
                         state = STATE_PLAYING
                         resume_music()
-                    elif event.key in (pygame.K_m, pygame.K_M):
+                    elif event.key == pygame.K_m:
                         state = STATE_MENU
                         selected_menu_index = 0
                         resume_music()

@@ -10,6 +10,16 @@
     "level": 1
   },
   {
+    "name": "Prueba 2",
+    "score": 131,
+    "level": 1
+  },
+  {
+    "name": "Prueba XD",
+    "score": 62,
+    "level": 1
+  },
+  {
     "name": "PLAYER",
     "score": 41,
     "level": 1
@@ -17,6 +27,11 @@
   {
     "name": "PLAYER",
     "score": 39,
+    "level": 1
+  },
+  {
+    "name": "Prueba 2",
+    "score": 37,
     "level": 1
   }
 ]
