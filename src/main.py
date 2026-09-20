@@ -1,3 +1,4 @@
+import os
 import random
 import pygame
 from pygame.locals import K_ESCAPE, K_LEFT, K_RIGHT, K_r, K_RETURN, KEYDOWN, QUIT
@@ -7,6 +8,7 @@ from pygame.locals import K_ESCAPE, K_LEFT, K_RIGHT, K_r, K_RETURN, KEYDOWN, QUI
 # ---------------------------
 WIDTH, HEIGHT = 480, 700
 FPS = 60
+HIGH_SCORE_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "highscore.txt"))
 
 # Colores principales del juego
 WHITE = (255, 255, 255)
@@ -32,6 +34,32 @@ ENEMY_HEIGHT = 92
 PLAYER_SPEED = 7
 SCROLL_SPEED = 2
 MAX_ACTIVE_ENEMIES = 2
+BASE_SCORE_RATE = 25
+MAX_DIFFICULTY_LEVEL = 8
+
+# ---------------------------
+# Sistemas de puntuación y récord
+# ---------------------------
+def load_high_score():
+    """Carga el récord guardado en un archivo local del proyecto."""
+    try:
+        with open(HIGH_SCORE_FILE, "r", encoding="utf-8") as file:
+            score = int(file.read().strip())
+            return max(0, score)
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_high_score(score):
+    """Guarda el récord en disco para mantenerlo entre partidas."""
+    with open(HIGH_SCORE_FILE, "w", encoding="utf-8") as file:
+        file.write(str(max(0, int(score))))
+
+
+def get_difficulty_level(score):
+    """Calcula el nivel de dificultad en función de la puntuación acumulada."""
+    return min(MAX_DIFFICULTY_LEVEL, 1 + score // 350)
+
 
 # ---------------------------
 # Clase del vehículo del jugador
@@ -60,9 +88,9 @@ class PlayerCar:
 # Clase del vehículo enemigo
 # ---------------------------
 class EnemyCar:
-    def __init__(self, lane, y, color):
+    def __init__(self, lane, y, color, speed=None):
         self.lane = lane
-        self.speed = random.uniform(4.2, 6.4)
+        self.speed = speed if speed is not None else random.uniform(4.2, 6.4)
         self.color = color
         lane_width = ROAD_WIDTH / LANE_COUNT
         road_left = (WIDTH - ROAD_WIDTH) // 2
@@ -193,31 +221,35 @@ def draw_background(screen, road_scroll_y):
         pygame.draw.rect(screen, (200, 200, 200), (road_right + 4, y, 6, 26), border_radius=3)
 
 
-def draw_hud(screen, is_game_over):
-    """Muestra una interfaz ligera con el nombre del juego y las instrucciones básicas."""
-    panel = pygame.Rect(0, 0, WIDTH, 50)
+def draw_hud(screen, score, high_score, difficulty_level, is_game_over):
+    """Muestra la información principal sin cubrir la carretera."""
+    panel = pygame.Rect(0, 0, WIDTH, 60)
     pygame.draw.rect(screen, HUD_BG, panel)
 
     title_font = pygame.font.SysFont("arial", 18, bold=True)
     info_font = pygame.font.SysFont("arial", 11)
 
     title = title_font.render("ROAD ESCAPE", True, TEXT_COLOR)
+    score_text = info_font.render(f"Score: {int(score)}", True, ACCENT)
+    record_text = info_font.render(f"Record: {int(high_score)}", True, WHITE)
+    level_text = info_font.render(f"Nivel: {difficulty_level}", True, (120, 220, 255))
     status = "RUNNING" if not is_game_over else "GAME OVER"
     status_text = info_font.render(status, True, ACCENT if not is_game_over else (255, 90, 90))
-    controls = info_font.render("← → mover   R reiniciar   ESC salir", True, (210, 210, 210))
 
-    screen.blit(title, (18, 14))
-    screen.blit(status_text, (WIDTH - 110, 18))
-    screen.blit(controls, (150, 18))
+    screen.blit(title, (18, 12))
+    screen.blit(score_text, (18, 34))
+    screen.blit(record_text, (130, 34))
+    screen.blit(level_text, (235, 34))
+    screen.blit(status_text, (WIDTH - 100, 18))
 
 
-def draw_game_over(screen):
-    """Muestra una pantalla de fin de partida más clara y legible."""
+def draw_game_over(screen, score, high_score):
+    """Muestra la pantalla de fin de partida con la puntuación y el récord."""
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 150))
     screen.blit(overlay, (0, 0))
 
-    header = pygame.Rect(70, 220, WIDTH - 140, 180)
+    header = pygame.Rect(70, 210, WIDTH - 140, 210)
     pygame.draw.rect(screen, (30, 30, 35), header, border_radius=18)
     pygame.draw.rect(screen, (255, 90, 90), header, 2, border_radius=18)
 
@@ -226,19 +258,23 @@ def draw_game_over(screen):
     small_font = pygame.font.SysFont("arial", 16)
 
     title = font_big.render("GAME OVER", True, (255, 110, 110))
+    score_text = font_small.render(f"Puntuación: {int(score)}", True, WHITE)
+    record_text = font_small.render(f"Récord: {int(high_score)}", True, ACCENT)
     restart = font_small.render("Presiona R para reiniciar", True, WHITE)
     quit_msg = small_font.render("ESC para salir", True, (220, 220, 220))
 
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 255))
-    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, 325))
-    screen.blit(quit_msg, (WIDTH // 2 - quit_msg.get_width() // 2, 360))
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 240))
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 300))
+    screen.blit(record_text, (WIDTH // 2 - record_text.get_width() // 2, 332))
+    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, 370))
+    screen.blit(quit_msg, (WIDTH // 2 - quit_msg.get_width() // 2, 405))
 
 
 # ---------------------------
 # Generación de enemigos
 # ---------------------------
-def spawn_enemy(enemies):
-    """Genera un enemigo en un carril aleatorio y evita que aparezcan demasiado juntos."""
+def spawn_enemy(enemies, difficulty_level):
+    """Genera un enemigo en un carril aleatorio con velocidad creciente según el nivel."""
     if len(enemies) >= MAX_ACTIVE_ENEMIES:
         return False
 
@@ -246,7 +282,6 @@ def spawn_enemy(enemies):
     random.shuffle(lane_order)
 
     for lane in lane_order:
-        # Se comprueba que el carril no esté demasiado cargado cerca de la parte superior
         too_close = False
         for enemy in enemies:
             if enemy.lane == lane and enemy.rect.top < 170:
@@ -260,7 +295,9 @@ def spawn_enemy(enemies):
             continue
 
         y = -ENEMY_HEIGHT - random.randint(60, 180)
-        enemies.append(EnemyCar(lane, y, random.choice(ENEMY_COLORS)))
+        base_speed = 4.2 + (difficulty_level * 0.35)
+        enemy_speed = random.uniform(base_speed, base_speed + 1.4)
+        enemies.append(EnemyCar(lane, y, random.choice(ENEMY_COLORS), speed=enemy_speed))
         return True
 
     return False
@@ -278,8 +315,10 @@ def reset_game():
     road_scroll_y = 0
     spawn_timer = 0.0
     next_spawn_delay = random.uniform(1.0, 2.2)
+    score = 0.0
+    difficulty_level = 1
     is_game_over = False
-    return player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, is_game_over
+    return player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, score, difficulty_level, is_game_over
 
 
 # ---------------------------
@@ -291,7 +330,8 @@ def main():
     pygame.display.set_caption("Road Escape")
     clock = pygame.time.Clock()
 
-    player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, is_game_over = reset_game()
+    high_score = load_high_score()
+    player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, score, difficulty_level, is_game_over = reset_game()
     running = True
 
     while running:
@@ -305,11 +345,15 @@ def main():
                 if event.key == K_ESCAPE:
                     running = False
                 if is_game_over and event.key in (K_r, K_RETURN):
-                    player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, is_game_over = reset_game()
+                    player, enemies, road_scroll_y, spawn_timer, next_spawn_delay, score, difficulty_level, is_game_over = reset_game()
 
         if not is_game_over:
-            # Movimiento visual de la carretera
-            road_scroll_y = (road_scroll_y + SCROLL_SPEED) % 120
+            # La puntuación aumenta con el tiempo para reflejar distancia recorrida.
+            score += dt * BASE_SCORE_RATE
+            difficulty_level = get_difficulty_level(score)
+
+            # La carretera se mueve con un desplazamiento ligeramente mayor a medida que sube la dificultad.
+            road_scroll_y = (road_scroll_y + SCROLL_SPEED + (difficulty_level - 1) * 0.08) % 120
 
             # Movimiento del jugador siguiendo la misma mecánica que antes
             keys = pygame.key.get_pressed()
@@ -318,9 +362,9 @@ def main():
             # Generación aleatoria de enemigos con tiempo de espera variable
             spawn_timer += dt
             if spawn_timer >= next_spawn_delay:
-                if spawn_enemy(enemies):
+                if spawn_enemy(enemies, difficulty_level):
                     spawn_timer = 0.0
-                    next_spawn_delay = random.uniform(1.0, 2.3)
+                    next_spawn_delay = random.uniform(1.0, 2.2)
                 else:
                     spawn_timer = 0.0
                     next_spawn_delay = random.uniform(0.6, 1.3)
@@ -331,21 +375,24 @@ def main():
                 if enemy.rect.top > HEIGHT:
                     enemies.remove(enemy)
                     spawn_timer = 0.0
-                    next_spawn_delay = random.uniform(0.8, 1.9)
+                    next_spawn_delay = random.uniform(0.8, 2.0)
 
                 if player.rect.colliderect(enemy.rect):
                     is_game_over = True
+                    if score > high_score:
+                        high_score = score
+                        save_high_score(high_score)
                     break
 
         # Dibujo del juego
         draw_background(screen, road_scroll_y)
-        draw_hud(screen, is_game_over)
+        draw_hud(screen, score, high_score, difficulty_level, is_game_over)
         player.draw(screen)
         for enemy in enemies:
             enemy.draw(screen)
 
         if is_game_over:
-            draw_game_over(screen)
+            draw_game_over(screen, score, high_score)
 
         pygame.display.flip()
 

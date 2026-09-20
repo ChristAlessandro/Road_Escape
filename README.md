@@ -178,3 +178,94 @@ Mejora la interfaz sin agregar todavía un menú principal completo:
 * Priorizar formas y elementos gráficos dibujados directamente con pygame.
 
 Antes de finalizar, explica brevemente qué cambios realizaste y qué partes del código fueron modificadas.
+
+------------- 5to promt -------------
+
+Continuemos trabajando sobre la versión actual del mini-juego 2D de carreras desarrollado en Python utilizando pygame.
+
+La versión actual ya cuenta con:
+
+* Carretera con varios carriles.
+* Automóvil del jugador con diseño visual mejorado.
+* Vehículos enemigos con diseño visual mejorado.
+* Generación aleatoria de enemigos.
+* Movimiento del jugador.
+* Colisiones.
+* Sistema de Game Over.
+* Reinicio de la partida.
+* Interfaz visual básica.
+
+Ahora quiero agregar los principales sistemas de progresión del juego.
+
+### 1. Sistema de puntuación
+
+Implementa un sistema de puntuación:
+
+* El jugador debe obtener puntos mientras permanece con vida.
+* La puntuación debe aumentar progresivamente con el tiempo.
+* Mostrar la puntuación durante la partida.
+* Mostrar la puntuación final cuando ocurre el Game Over.
+* La puntuación debe reiniciarse al comenzar una nueva partida.
+
+La puntuación debe estar relacionada con el tiempo o distancia recorrida y no depender únicamente de la cantidad de enemigos que aparecen.
+
+### 2. Dificultad progresiva
+
+Implementa un sistema de dificultad progresiva:
+
+* Al comenzar, la velocidad de los enemigos debe ser moderada.
+* Conforme aumenta la puntuación o el tiempo de supervivencia, la velocidad debe aumentar gradualmente.
+* La dificultad no debe aumentar demasiado rápido.
+* El sistema de generación de enemigos debe seguir garantizando que el jugador tenga una posibilidad razonable de esquivarlos.
+* Evita que la dificultad llegue a un punto en el que el juego sea imposible de jugar.
+
+La dificultad debe poder aumentar varias veces durante una partida.
+
+### 3. Récord / High Score
+
+Agrega un sistema de puntuación máxima:
+
+* Guardar la puntuación más alta alcanzada por el jugador.
+* Mostrar el récord durante la partida o en la pantalla de Game Over.
+* Si el jugador supera el récord, actualizarlo.
+* El récord debe mantenerse cuando el jugador reinicia una partida.
+* Si es sencillo de implementar, guardar el récord en un archivo local para que permanezca después de cerrar y volver a abrir el juego.
+
+### 4. Interfaz
+
+Mejora la información mostrada en pantalla:
+
+* Puntuación actual.
+* Récord.
+* Nivel o indicador de dificultad.
+* Game Over.
+* Puntuación obtenida en la partida.
+* Instrucción para reiniciar.
+
+La información debe ser clara y no cubrir elementos importantes de la carretera.
+
+### 5. Mantener lo existente
+
+Es muy importante que esta modificación conserve las funcionalidades actuales:
+
+* No eliminar el movimiento del jugador.
+* No eliminar la generación aleatoria de enemigos.
+* No eliminar las colisiones.
+* No eliminar el Game Over.
+* No eliminar las mejoras visuales.
+* No cambiar innecesariamente el diseño de los vehículos.
+
+Mantén el código organizado y fácil de entender.
+
+### 6. Validación
+
+Al finalizar, explica brevemente:
+
+* Qué funciones o clases nuevas agregaste.
+* Cómo funciona el sistema de puntuación.
+* Cómo aumenta la dificultad.
+* Cómo se guarda y actualiza el récord.
+* Qué partes del código existente modificaste.
+
+No agregues todavía sonidos, música ni un menú principal completo. Esas funcionalidades se implementarán en una siguiente iteración.
+
