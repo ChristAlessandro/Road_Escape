@@ -269,3 +269,201 @@ Al finalizar, explica brevemente:
 
 No agregues todavía sonidos, música ni un menú principal completo. Esas funcionalidades se implementarán en una siguiente iteración.
 
+------------- 6to promt -------------
+
+Continuemos trabajando sobre la versión actual del mini-juego 2D de carreras desarrollado en Python utilizando pygame.
+
+La versión actual ya cuenta con:
+
+* Carretera con varios carriles.
+* Automóvil del jugador con diseño visual mejorado.
+* Vehículos enemigos con diseño visual mejorado.
+* Generación aleatoria de enemigos.
+* Movimiento del jugador hacia izquierda y derecha.
+* Colisiones.
+* Sistema de Game Over.
+* Reinicio de partida.
+* Puntuación.
+* Sistema de niveles.
+* Récord / High Score.
+* Interfaz visual mejorada.
+
+Después de probar la versión actual quiero realizar una nueva iteración para mejorar la jugabilidad y completar los sistemas principales del juego.
+
+## 1. Sistema de niveles infinito
+
+Modificar el sistema actual para que los niveles sean infinitos.
+
+Requisitos:
+
+* No debe existir un nivel máximo.
+* El nivel debe aumentar progresivamente mientras el jugador sobreviva.
+* Utilizar una fórmula sencilla para calcular el aumento de dificultad.
+* Cada nivel debe incrementar gradualmente la dificultad.
+* Evitar aumentos excesivamente bruscos.
+* El nivel actual debe mostrarse en pantalla.
+* La dificultad debe seguir aumentando aunque el jugador alcance niveles muy altos.
+
+No crear manualmente una lista limitada de niveles.
+
+## 2. Puntuación moderada
+
+Ajustar el sistema de puntuación actual.
+
+La puntuación debe:
+
+* Aumentar principalmente según el tiempo de supervivencia.
+* Incrementarse de manera moderada y constante.
+* Evitar que la puntuación suba demasiado rápido.
+* Ser fácil de comparar entre diferentes partidas.
+* Reiniciarse al comenzar una nueva partida.
+* Mantener el sistema de High Score existente.
+
+## 3. Aumento progresivo de velocidad y aparición de vehículos
+
+La dificultad debe afectar también a los vehículos enemigos.
+
+Quiero que progresivamente:
+
+* Los vehículos enemigos aumenten ligeramente su velocidad.
+* El intervalo entre apariciones disminuya gradualmente.
+* La cantidad de vehículos que pueden aparecer pueda aumentar de manera controlada.
+* Los vehículos sigan apareciendo en posiciones aleatorias.
+* Nunca se generen combinaciones que hagan imposible esquivarlos.
+* El aumento de dificultad sea progresivo y no repentino.
+
+Debe existir un límite razonable para la velocidad de aparición simultánea para mantener la jugabilidad.
+
+## 4. Movimiento adelante y atrás
+
+Actualmente el jugador solamente puede mover el automóvil hacia izquierda y derecha.
+
+Agregar también:
+
+* Movimiento hacia adelante.
+* Movimiento hacia atrás.
+* Utilizar las teclas de dirección correspondientes:
+
+  * Flecha izquierda → mover izquierda.
+  * Flecha derecha → mover derecha.
+  * Flecha arriba → mover adelante.
+  * Flecha abajo → mover atrás.
+
+El movimiento adelante/atrás debe estar limitado a la zona jugable de la carretera.
+
+El automóvil no debe poder salir de los límites de la pantalla.
+
+El movimiento debe sentirse controlable y no demasiado rápido.
+
+Importante: adaptar las colisiones y el sistema de enemigos para que esta nueva posibilidad de movimiento no genere errores.
+
+## 5. Menú principal
+
+Crear un menú principal al iniciar el juego.
+
+Debe mostrar:
+
+* Nombre del juego: "Road Escape".
+* Botón/opción "Jugar".
+* Botón/opción "Controles".
+* Botón/opción "Salir".
+* Récord actual.
+
+El menú debe ser visualmente coherente con el resto del juego.
+
+No es necesario utilizar botones externos; pueden ser elementos dibujados directamente con pygame.
+
+## 6. Pantalla de controles
+
+Crear una pantalla accesible desde el menú principal que indique claramente los controles.
+
+Mostrar como mínimo:
+
+* ← → : mover izquierda/derecha.
+* ↑ : mover adelante.
+* ↓ : mover atrás.
+* ESC : pausar el juego.
+* R : reiniciar después de Game Over.
+
+Debe existir una opción para regresar al menú principal.
+
+## 7. Sistema de pausa
+
+Agregar la posibilidad de pausar la partida mediante la tecla ESC.
+
+Cuando el juego esté pausado:
+
+* Detener el movimiento de vehículos.
+* Detener el aumento de puntuación.
+* Mostrar "PAUSA".
+* Mostrar una indicación para continuar.
+* Permitir regresar al menú principal.
+
+Al continuar, la partida debe continuar desde el mismo estado.
+
+## 8. Sonidos y música
+
+Agregar soporte para efectos de sonido y música utilizando pygame.
+
+Como mínimo:
+
+* Sonido al producirse una colisión.
+* Sonido al seleccionar una opción del menú.
+* Música de fondo durante la partida, si es posible.
+
+Organizar los archivos de sonido dentro de:
+
+assets/sounds/
+
+Si no existen archivos de audio disponibles, crea la estructura necesaria y deja preparado el código para agregarlos posteriormente sin provocar errores si los archivos no existen.
+
+La ausencia de archivos de sonido no debe impedir que el juego funcione.
+
+## 9. Game Over
+
+Mantener el sistema actual de Game Over y mejorarlo para mostrar:
+
+* "GAME OVER".
+* Puntuación obtenida.
+* Récord actual.
+* Nivel alcanzado.
+* Opción para reiniciar.
+* Opción para regresar al menú principal.
+
+## 10. Mantener las funcionalidades existentes
+
+Es muy importante no eliminar ni romper:
+
+* El diseño visual actual.
+* Movimiento izquierda/derecha.
+* Vehículos enemigos.
+* Generación aleatoria.
+* Colisiones.
+* Puntuación.
+* High Score.
+* Dificultad progresiva.
+* Game Over.
+
+Mantén el código organizado y fácil de entender.
+
+Utiliza funciones o clases cuando ayuden realmente a separar las diferentes partes del juego.
+
+Evita crear código innecesariamente complejo.
+
+## 11. Validación
+
+Al finalizar, explica brevemente:
+
+* Cómo funciona el sistema de niveles infinitos.
+* Cómo se calcula la puntuación.
+* Cómo aumenta progresivamente la velocidad y frecuencia de aparición de enemigos.
+* Cómo funciona el movimiento adelante/atrás.
+* Cómo funciona el menú.
+* Cómo funcionan los controles.
+* Cómo funciona la pausa.
+* Cómo se manejan los sonidos y archivos inexistentes.
+* Qué partes del código existente fueron modificadas.
+
+También indica cualquier limitación que pueda quedar pendiente.
+
+------------- 7mo promt -------------

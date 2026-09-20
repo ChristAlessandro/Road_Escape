@@ -1,7 +1,11 @@
+import json
 import os
 import random
+from pathlib import Path
+
 import pygame
 from pygame.locals import (
+    K_BACKSPACE,
     K_DOWN,
     K_ESCAPE,
     K_LEFT,
@@ -19,7 +23,10 @@ from pygame.locals import (
 # ---------------------------
 WIDTH, HEIGHT = 480, 700
 FPS = 60
-HIGH_SCORE_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "highscore.txt"))
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "assets" / "data"
+RECORDS_FILE = DATA_DIR / "records.json"
+HIGH_SCORE_FILE = BASE_DIR / "highscore.txt"
 
 # Colores principales del juego
 WHITE = (255, 255, 255)
@@ -36,6 +43,8 @@ TEXT_COLOR = (245, 245, 245)
 ACCENT = (255, 210, 60)
 BUTTON_BG = (35, 43, 52)
 BUTTON_SELECTED = (60, 105, 175)
+PANEL_BG = (18, 22, 28)
+PANEL_LIGHT = (38, 45, 53)
 
 # Dimensiones del juego y vehículos
 ROAD_WIDTH = 260
@@ -48,17 +57,29 @@ PLAYER_SPEED = 7
 SCROLL_SPEED = 2
 MAX_ACTIVE_ENEMIES = 2
 BASE_SCORE_RATE = 12
+MAX_NAME_LENGTH = 12
+TOP_RECORDS_LIMIT = 10
 
 # Estados del juego
 STATE_MENU = "menu"
+STATE_NAME_INPUT = "name_input"
 STATE_CONTROLS = "controls"
+STATE_RECORDS = "records"
 STATE_PLAYING = "playing"
 STATE_PAUSED = "paused"
 STATE_GAME_OVER = "game_over"
 
+
 # ---------------------------
 # Sistema de archivos y sonido
 # ---------------------------
+def ensure_records_file():
+    """Crea la carpeta y el archivo JSON de registros si no existen."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if not RECORDS_FILE.exists():
+        RECORDS_FILE.write_text("[]", encoding="utf-8")
+
+
 def load_high_score():
     """Carga el récord guardado en un archivo local del proyecto."""
     try:
@@ -74,34 +95,96 @@ def save_high_score(score):
         file.write(str(max(0, int(score))))
 
 
+def load_records():
+    """Lee y normaliza la tabla de récords desde JSON."""
+    ensure_records_file()
+    try:
+        with open(RECORDS_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    normalized = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "PLAYER")).strip()[:MAX_NAME_LENGTH]
+        if not name:
+            name = "PLAYER"
+        try:
+            score = max(0, int(item.get("score", 0)))
+            level = max(1, int(item.get("level", 1)))
+        except (TypeError, ValueError):
+            continue
+        normalized.append({"name": name, "score": score, "level": level})
+
+    normalized.sort(key=lambda entry: (entry["score"], entry["level"]), reverse=True)
+    return normalized[:TOP_RECORDS_LIMIT]
+
+
+def save_records(records):
+    """Guarda los récords limpiamente en JSON."""
+    ensure_records_file()
+    safe_records = []
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "PLAYER")).strip()[:MAX_NAME_LENGTH]
+        if not name:
+            name = "PLAYER"
+        try:
+            score = max(0, int(item.get("score", 0)))
+            level = max(1, int(item.get("level", 1)))
+        except (TypeError, ValueError):
+            continue
+        safe_records.append({"name": name, "score": score, "level": level})
+
+    safe_records.sort(key=lambda entry: (entry["score"], entry["level"]), reverse=True)
+    safe_records = safe_records[:TOP_RECORDS_LIMIT]
+
+    try:
+        with open(RECORDS_FILE, "w", encoding="utf-8") as file:
+            json.dump(safe_records, file, ensure_ascii=False, indent=2)
+    except OSError:
+        pass
+
+
+def add_record(player_name, score, level):
+    """Añade un resultado a la tabla global de récords."""
+    records = load_records()
+    records.append({
+        "name": player_name.strip()[:MAX_NAME_LENGTH] or "PLAYER",
+        "score": max(0, int(score)),
+        "level": max(1, int(level)),
+    })
+    save_records(records)
+    return load_records()
+
+
 def load_sounds():
     """Carga sonidos si existen; si no, devuelve None sin romper el juego."""
-    sounds = {
-        "select": None,
-        "collision": None,
-    }
-
-    sound_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "sounds"))
+    sounds = {"select": None, "collision": None}
+    sound_dir = BASE_DIR / "assets" / "sounds"
     try:
         pygame.mixer.init()
     except pygame.error:
         return sounds
 
-    for key, filename in {
-        "select": "menu_select.wav",
-        "collision": "collision.wav",
-    }.items():
-        path = os.path.join(sound_dir, filename)
-        if os.path.exists(path):
+    for key, filename in {"select": "menu_select.wav", "collision": "collision.wav"}.items():
+        path = sound_dir / filename
+        if path.exists():
             try:
-                sounds[key] = pygame.mixer.Sound(path)
+                sounds[key] = pygame.mixer.Sound(str(path))
             except pygame.error:
                 sounds[key] = None
 
-    music_path = os.path.join(sound_dir, "background.ogg")
-    if os.path.exists(music_path):
+    music_path = sound_dir / "background.ogg"
+    if music_path.exists():
         try:
-            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.load(str(music_path))
             pygame.mixer.music.set_volume(0.25)
         except pygame.error:
             pass
@@ -123,8 +206,9 @@ def pause_music():
 
 def resume_music():
     """Reanuda la música si existe."""
-    if pygame.mixer.get_init() is not None and not pygame.mixer.music.get_busy():
-        pygame.mixer.music.unpause()
+    if pygame.mixer.get_init() is not None:
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.unpause()
 
 
 # ---------------------------
@@ -299,29 +383,35 @@ def draw_background(screen, road_scroll_y):
         pygame.draw.rect(screen, (200, 200, 200), (road_right + 4, y, 6, 26), border_radius=3)
 
 
-def draw_button(screen, rect, text, selected):
+def draw_panel(screen, rect, color=PANEL_BG):
+    """Panel oscuro con borde para mejorar lectura en menúes y controles."""
+    pygame.draw.rect(screen, color, rect, border_radius=14)
+    pygame.draw.rect(screen, (130, 140, 150), rect, 2, border_radius=14)
+
+
+def draw_button(screen, rect, text, selected, text_color=WHITE, font_size=24):
     """Dibuja un botón simple para menú y pantallas auxiliares."""
     color = BUTTON_SELECTED if selected else BUTTON_BG
     pygame.draw.rect(screen, color, rect, border_radius=10)
     pygame.draw.rect(screen, (255, 255, 255), rect, 2, border_radius=10)
 
-    font = pygame.font.SysFont("arial", 24, bold=True)
-    label = font.render(text, True, WHITE)
+    font = pygame.font.SysFont("arial", font_size, bold=True)
+    label = font.render(text, True, text_color)
     screen.blit(label, (rect.centerx - label.get_width() // 2, rect.centery - label.get_height() // 2))
 
 
-def draw_menu(screen, high_score, selected_index):
-    """Dibuja la pantalla principal con título, opciones y récord."""
+def draw_menu(screen, records, high_score, selected_index):
+    """Dibuja la pantalla principal con menú y resumen de récords."""
     draw_background(screen, 0)
 
     title_font = pygame.font.SysFont("arial", 46, bold=True)
     subtitle_font = pygame.font.SysFont("arial", 16)
 
     title = title_font.render("Road Escape", True, ACCENT)
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 120))
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 90))
 
-    items = ["Jugar", "Controles", "Salir"]
-    start_y = 250
+    items = ["Jugar", "Récords", "Controles", "Salir"]
+    start_y = 210
     button_h = 52
     gap = 18
 
@@ -329,34 +419,102 @@ def draw_menu(screen, high_score, selected_index):
         rect = pygame.Rect(WIDTH // 2 - 120, start_y + i * (button_h + gap), 240, button_h)
         draw_button(screen, rect, item, selected_index == i)
 
-    record_text = subtitle_font.render(f"Récord: {int(high_score)}", True, WHITE)
-    screen.blit(record_text, (WIDTH // 2 - record_text.get_width() // 2, 520))
+    summary_rect = pygame.Rect(55, 530, 370, 120)
+    draw_panel(screen, summary_rect)
+    title_summary = subtitle_font.render("MEJORES", True, ACCENT)
+    screen.blit(title_summary, (WIDTH // 2 - title_summary.get_width() // 2, 548))
+
+    for i, entry in enumerate(records[:3]):
+        label = subtitle_font.render(f"{i + 1}. {entry['name']} {entry['score']} pts", True, WHITE)
+        screen.blit(label, (75, 580 + i * 20))
+
+    current_record = subtitle_font.render(f"Récord actual: {int(high_score)}", True, WHITE)
+    screen.blit(current_record, (WIDTH // 2 - current_record.get_width() // 2, 640))
 
 
-def draw_controls(screen, selected_index):
-    """Muestra la pantalla de controles con una opción para volver."""
+def draw_controls(screen):
+    """Muestra la pantalla de controles con fondo y lectura clara."""
     draw_background(screen, 0)
 
-    title_font = pygame.font.SysFont("arial", 36, bold=True)
-    text_font = pygame.font.SysFont("arial", 18)
+    panel = pygame.Rect(40, 110, 400, 430)
+    draw_panel(screen, panel)
 
-    title = title_font.render("Controles", True, ACCENT)
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+    title_font = pygame.font.SysFont("arial", 36, bold=True)
+    text_font = pygame.font.SysFont("arial", 20, bold=True)
+    info_font = pygame.font.SysFont("arial", 18)
+
+    title = title_font.render("CONTROLES", True, ACCENT)
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 135))
 
     lines = [
-        "← → : mover izquierda / derecha",
-        "↑ : mover hacia adelante",
-        "↓ : mover hacia atrás",
-        "ESC : pausar / continuar",
-        "R : reiniciar tras Game Over",
+        ("← →", "Mover izquierda / derecha"),
+        ("↑ ↓", "Mover adelante / atrás"),
+        ("ESC", "Pausar / continuar"),
+        ("R", "Reiniciar tras Game Over"),
     ]
 
-    for index, line in enumerate(lines):
-        label = text_font.render(line, True, WHITE)
-        screen.blit(label, (90, 180 + index * 48))
+    for index, (key_text, description) in enumerate(lines):
+        key_label = text_font.render(key_text, True, ACCENT)
+        desc_label = info_font.render(description, True, WHITE)
+        screen.blit(key_label, (85, 190 + index * 72))
+        screen.blit(desc_label, (160, 195 + index * 72))
 
-    back_rect = pygame.Rect(WIDTH // 2 - 130, 530, 260, 52)
-    draw_button(screen, back_rect, "Volver", selected_index == 0)
+    back_rect = pygame.Rect(WIDTH // 2 - 130, 570, 260, 52)
+    draw_button(screen, back_rect, "Volver", False)
+
+
+def draw_name_input(screen, player_name):
+    """Pantalla para ingresar el nombre del jugador antes de comenzar la partida."""
+    draw_background(screen, 0)
+
+    panel = pygame.Rect(45, 130, 390, 310)
+    draw_panel(screen, panel)
+
+    title_font = pygame.font.SysFont("arial", 34, bold=True)
+    label_font = pygame.font.SysFont("arial", 22)
+    field_font = pygame.font.SysFont("arial", 24, bold=True)
+
+    title = title_font.render("Ingresa tu nombre", True, ACCENT)
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 160))
+
+    field = pygame.Rect(90, 250, 300, 58)
+    pygame.draw.rect(screen, PANEL_LIGHT, field, border_radius=10)
+    pygame.draw.rect(screen, (255, 255, 255), field, 2, border_radius=10)
+
+    text = field_font.render(player_name or "Jugador", True, WHITE)
+    screen.blit(text, (field.x + 12, field.y + 15))
+
+    hint = label_font.render(f"Máx. {MAX_NAME_LENGTH} caracteres", True, (220, 220, 220))
+    screen.blit(hint, (WIDTH // 2 - hint.get_width() // 2, 330))
+
+    button_rect = pygame.Rect(WIDTH // 2 - 110, 390, 220, 52)
+    draw_button(screen, button_rect, "Confirmar", False)
+
+
+def draw_records(screen, records):
+    """Muestra la tabla de mejores puntuaciones."""
+    draw_background(screen, 0)
+
+    panel = pygame.Rect(35, 90, 410, 520)
+    draw_panel(screen, panel)
+
+    title_font = pygame.font.SysFont("arial", 36, bold=True)
+    text_font = pygame.font.SysFont("arial", 20, bold=True)
+
+    title = title_font.render("RÉCORDS", True, ACCENT)
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 115))
+
+    if not records:
+        empty = text_font.render("Sin registros todavía", True, WHITE)
+        screen.blit(empty, (WIDTH // 2 - empty.get_width() // 2, 240))
+    else:
+        for index, entry in enumerate(records[:10]):
+            row_text = f"{index + 1}. {entry['name']:<12} {entry['score']:>5} NIVEL {entry['level']}"
+            row = text_font.render(row_text, True, WHITE)
+            screen.blit(row, (55, 180 + index * 42))
+
+    back_rect = pygame.Rect(WIDTH // 2 - 130, 585, 260, 52)
+    draw_button(screen, back_rect, "Volver", False)
 
 
 def draw_hud(screen, score, high_score, level, is_game_over):
@@ -399,7 +557,7 @@ def draw_pause_overlay(screen):
     screen.blit(menu_text, (WIDTH // 2 - menu_text.get_width() // 2, HEIGHT // 2 + 45))
 
 
-def draw_game_over(screen, score, high_score, level):
+def draw_game_over(screen, score, high_score, level, player_name):
     """Muestra la pantalla de fin de partida con puntuación, récord y nivel."""
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 150))
@@ -414,6 +572,7 @@ def draw_game_over(screen, score, high_score, level):
     small_font = pygame.font.SysFont("arial", 16)
 
     title = font_big.render("GAME OVER", True, (255, 110, 110))
+    player_text = font_small.render(f"Jugador: {player_name}", True, WHITE)
     score_text = font_small.render(f"Puntuación: {int(score)}", True, WHITE)
     record_text = font_small.render(f"Récord: {int(high_score)}", True, ACCENT)
     level_text = font_small.render(f"Nivel: {level}", True, (120, 220, 255))
@@ -421,11 +580,12 @@ def draw_game_over(screen, score, high_score, level):
     menu_text = small_font.render("M para volver al menú", True, (220, 220, 220))
 
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 235))
-    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 295))
-    screen.blit(record_text, (WIDTH // 2 - record_text.get_width() // 2, 328))
-    screen.blit(level_text, (WIDTH // 2 - level_text.get_width() // 2, 361))
-    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, 395))
-    screen.blit(menu_text, (WIDTH // 2 - menu_text.get_width() // 2, 425))
+    screen.blit(player_text, (WIDTH // 2 - player_text.get_width() // 2, 294))
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 320))
+    screen.blit(record_text, (WIDTH // 2 - record_text.get_width() // 2, 348))
+    screen.blit(level_text, (WIDTH // 2 - level_text.get_width() // 2, 376))
+    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, 405))
+    screen.blit(menu_text, (WIDTH // 2 - menu_text.get_width() // 2, 430))
 
 
 # ---------------------------
@@ -496,13 +656,17 @@ def main():
         except pygame.error:
             pass
 
-    high_score = load_high_score()
+    records = load_records()
+    high_score = max((entry["score"] for entry in records), default=load_high_score())
+    save_high_score(high_score)
+
+    current_player_name = "PLAYER"
+    player_name_input = ""
     state = STATE_MENU
     selected_menu_index = 0
-    selected_controls_index = 0
+    running = True
 
     player, enemies, road_scroll_y, score, level, spawn_timer, next_spawn_delay, is_game_over = start_game()
-    running = True
 
     while running:
         dt = clock.tick(FPS) / 1000.0
@@ -510,6 +674,7 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
+
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     if state == STATE_PLAYING:
@@ -518,33 +683,49 @@ def main():
                     elif state == STATE_PAUSED:
                         state = STATE_PLAYING
                         resume_music()
-                    elif state == STATE_CONTROLS:
+                    elif state in (STATE_CONTROLS, STATE_RECORDS, STATE_NAME_INPUT):
                         state = STATE_MENU
                         selected_menu_index = 0
-                        if sounds["select"] is not None:
-                            sounds["select"].play()
-                    elif state == STATE_GAME_OVER:
-                        running = False
+                        play_sound(sounds, "select")
 
                 if state == STATE_MENU:
                     if event.key in (pygame.K_UP, pygame.K_w):
-                        selected_menu_index = (selected_menu_index - 1) % 3
+                        selected_menu_index = (selected_menu_index - 1) % 4
                         play_sound(sounds, "select")
                     elif event.key in (pygame.K_DOWN, pygame.K_s):
-                        selected_menu_index = (selected_menu_index + 1) % 3
+                        selected_menu_index = (selected_menu_index + 1) % 4
                         play_sound(sounds, "select")
                     elif event.key in (K_RETURN, pygame.K_SPACE):
                         if selected_menu_index == 0:
+                            state = STATE_NAME_INPUT
+                            player_name_input = current_player_name if current_player_name else ""
+                            play_sound(sounds, "select")
+                        elif selected_menu_index == 1:
+                            state = STATE_RECORDS
+                            records = load_records()
+                            play_sound(sounds, "select")
+                        elif selected_menu_index == 2:
+                            state = STATE_CONTROLS
+                            play_sound(sounds, "select")
+                        elif selected_menu_index == 3:
+                            running = False
+
+                elif state == STATE_NAME_INPUT:
+                    if event.key == K_RETURN:
+                        if player_name_input.strip():
+                            current_player_name = player_name_input.strip()[:MAX_NAME_LENGTH]
                             player, enemies, road_scroll_y, score, level, spawn_timer, next_spawn_delay, is_game_over = start_game()
                             state = STATE_PLAYING
                             resume_music()
                             play_sound(sounds, "select")
-                        elif selected_menu_index == 1:
-                            state = STATE_CONTROLS
-                            selected_controls_index = 0
-                            play_sound(sounds, "select")
-                        elif selected_menu_index == 2:
-                            running = False
+                    elif event.key == K_BACKSPACE:
+                        player_name_input = player_name_input[:-1]
+                    elif event.unicode and event.unicode.isprintable() and len(player_name_input) < MAX_NAME_LENGTH:
+                        player_name_input += event.unicode
+                    elif event.key == K_ESCAPE:
+                        state = STATE_MENU
+                        selected_menu_index = 0
+                        play_sound(sounds, "select")
 
                 elif state == STATE_CONTROLS:
                     if event.key in (K_RETURN, pygame.K_SPACE, K_ESCAPE):
@@ -552,8 +733,14 @@ def main():
                         selected_menu_index = 0
                         play_sound(sounds, "select")
 
+                elif state == STATE_RECORDS:
+                    if event.key in (K_RETURN, pygame.K_SPACE, K_ESCAPE):
+                        state = STATE_MENU
+                        selected_menu_index = 0
+                        play_sound(sounds, "select")
+
                 elif state == STATE_PAUSED:
-                    if event.key in (pygame.K_m, pygame.K_M):
+                    if event.key == pygame.K_m:
                         state = STATE_MENU
                         selected_menu_index = 0
                         resume_music()
@@ -563,6 +750,7 @@ def main():
 
                 elif state == STATE_GAME_OVER:
                     if event.key == K_r:
+                        player_name_input = current_player_name
                         player, enemies, road_scroll_y, score, level, spawn_timer, next_spawn_delay, is_game_over = start_game()
                         state = STATE_PLAYING
                         resume_music()
@@ -575,25 +763,53 @@ def main():
                     state = STATE_PAUSED
                     pause_music()
 
-            elif event.type == MOUSEBUTTONDOWN and state == STATE_MENU:
+            elif event.type == MOUSEBUTTONDOWN:
                 x, y = event.pos
-                items = ["Jugar", "Controles", "Salir"]
-                start_y = 250
-                button_h = 52
-                for index, _ in enumerate(items):
-                    rect = pygame.Rect(WIDTH // 2 - 120, start_y + index * (button_h + 18), 240, button_h)
-                    if rect.collidepoint(x, y):
-                        selected_menu_index = index
-                        if index == 0:
+
+                if state == STATE_MENU:
+                    items = ["Jugar", "Récords", "Controles", "Salir"]
+                    start_y = 210
+                    button_h = 52
+                    for index, _ in enumerate(items):
+                        rect = pygame.Rect(WIDTH // 2 - 120, start_y + index * (button_h + 18), 240, button_h)
+                        if rect.collidepoint(x, y):
+                            selected_menu_index = index
+                            if index == 0:
+                                state = STATE_NAME_INPUT
+                                player_name_input = current_player_name if current_player_name else ""
+                            elif index == 1:
+                                state = STATE_RECORDS
+                                records = load_records()
+                            elif index == 2:
+                                state = STATE_CONTROLS
+                            elif index == 3:
+                                running = False
+                            play_sound(sounds, "select")
+                            break
+
+                elif state == STATE_NAME_INPUT:
+                    confirm_rect = pygame.Rect(WIDTH // 2 - 110, 390, 220, 52)
+                    if confirm_rect.collidepoint(x, y):
+                        if player_name_input.strip():
+                            current_player_name = player_name_input.strip()[:MAX_NAME_LENGTH]
                             player, enemies, road_scroll_y, score, level, spawn_timer, next_spawn_delay, is_game_over = start_game()
                             state = STATE_PLAYING
                             resume_music()
-                        elif index == 1:
-                            state = STATE_CONTROLS
-                        elif index == 2:
-                            running = False
+                            play_sound(sounds, "select")
+
+                elif state == STATE_CONTROLS:
+                    back_rect = pygame.Rect(WIDTH // 2 - 130, 570, 260, 52)
+                    if back_rect.collidepoint(x, y):
+                        state = STATE_MENU
+                        selected_menu_index = 0
                         play_sound(sounds, "select")
-                        break
+
+                elif state == STATE_RECORDS:
+                    back_rect = pygame.Rect(WIDTH // 2 - 130, 585, 260, 52)
+                    if back_rect.collidepoint(x, y):
+                        state = STATE_MENU
+                        selected_menu_index = 0
+                        play_sound(sounds, "select")
 
         if state == STATE_PLAYING:
             score += dt * BASE_SCORE_RATE
@@ -625,13 +841,19 @@ def main():
                     if score > high_score:
                         high_score = score
                         save_high_score(high_score)
+                    added = add_record(current_player_name, score, level)
+                    records = added
                     break
 
         # Dibujo del juego
         if state == STATE_MENU:
-            draw_menu(screen, high_score, selected_menu_index)
+            draw_menu(screen, records, high_score, selected_menu_index)
+        elif state == STATE_NAME_INPUT:
+            draw_name_input(screen, player_name_input)
         elif state == STATE_CONTROLS:
-            draw_controls(screen, selected_controls_index)
+            draw_controls(screen)
+        elif state == STATE_RECORDS:
+            draw_records(screen, records)
         elif state in (STATE_PLAYING, STATE_PAUSED, STATE_GAME_OVER):
             draw_background(screen, road_scroll_y)
             draw_hud(screen, score, high_score, level, state == STATE_GAME_OVER)
@@ -642,7 +864,7 @@ def main():
             if state == STATE_PAUSED:
                 draw_pause_overlay(screen)
             elif state == STATE_GAME_OVER:
-                draw_game_over(screen, score, high_score, level)
+                draw_game_over(screen, score, high_score, level, current_player_name)
 
         pygame.display.flip()
 
