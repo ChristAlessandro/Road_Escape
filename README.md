@@ -467,3 +467,380 @@ Al finalizar, explica brevemente:
 También indica cualquier limitación que pueda quedar pendiente.
 
 ------------- 7mo promt -------------
+
+Continuemos trabajando sobre la versión actual de "Road Escape". Esta será la última iteración importante de desarrollo y estará enfocada en corregir errores, mejorar la experiencia de usuario y agregar un sistema de jugadores y récords.
+
+La versión actual ya cuenta con:
+
+* Menú principal.
+* Juego de carreras.
+* Movimiento del jugador en cuatro direcciones.
+* Vehículos enemigos.
+* Generación aleatoria de enemigos.
+* Colisiones.
+* Game Over.
+* Puntuación.
+* High Score.
+* Niveles infinitos.
+* Dificultad progresiva.
+* Sistema de pausa.
+* Pantalla de controles.
+* Sonidos/música.
+* Interfaz visual mejorada.
+
+Durante las pruebas encontré los siguientes problemas:
+
+## 1. Corregir botón "Volver"
+
+En algunas pantallas existe un botón u opción para regresar al menú principal, pero actualmente no tiene funcionalidad.
+
+Corregirlo para que:
+
+* El botón "Volver" funcione correctamente.
+* Desde la pantalla de controles permita regresar al menú principal.
+* Desde otras pantallas donde exista esta opción también funcione.
+* No cierre el juego accidentalmente.
+* El estado de la partida se gestione correctamente al regresar al menú.
+
+## 2. Corregir tecla ESC
+
+Actualmente al presionar ESC durante el juego la aplicación se cierra.
+
+Esto debe corregirse.
+
+La tecla ESC debe:
+
+* Pausar la partida.
+* Mostrar claramente "PAUSA".
+* Detener temporalmente el movimiento de enemigos.
+* Detener temporalmente el aumento de puntuación.
+* Mantener el estado actual de la partida.
+* Permitir continuar la partida.
+* Permitir regresar al menú principal si existe esa opción.
+
+ESC no debe cerrar la aplicación cuando se está jugando.
+
+El cierre de la aplicación debe estar reservado para la opción "Salir" del menú o para cerrar la ventana mediante el mecanismo correspondiente de pygame.
+
+## 3. Mejorar la pantalla de controles
+
+Actualmente los textos de los controles en el menú/pantalla correspondiente no son suficientemente fáciles de leer.
+
+Mejorar esta sección:
+
+* Colocar un fondo oscuro, panel semitransparente o recuadro detrás de los textos.
+* Utilizar un contraste suficiente entre texto y fondo.
+* Organizar los controles de forma clara.
+* Utilizar símbolos o nombres de teclas fáciles de entender.
+* Mantener una apariencia coherente con el diseño general del juego.
+
+Por ejemplo:
+
+CONTROLES
+
+← →  Mover izquierda / derecha
+↑ ↓  Mover adelante / atrás
+ESC   Pausar
+R     Reiniciar después de Game Over
+
+El texto debe poder leerse claramente independientemente del fondo que exista detrás.
+
+## 4. Ingreso del nombre del jugador
+
+Agregar un sistema para que el jugador pueda ingresar su nombre antes de comenzar una partida.
+
+Crear una pantalla sencilla de ingreso de nombre:
+
+* Mostrar "Ingresa tu nombre".
+* Mostrar un campo donde el usuario pueda escribir.
+* Permitir utilizar el teclado.
+* Mostrar visualmente el nombre mientras se escribe.
+* Tener una opción para confirmar.
+* No permitir iniciar la partida si el nombre está vacío.
+* Limitar la longitud del nombre para evitar problemas visuales.
+* Después de confirmar, comenzar la partida utilizando ese nombre.
+
+El nombre debe mantenerse durante toda la partida.
+
+## 5. Tabla de récords por jugador
+
+Reemplazar el concepto de un único High Score por una tabla de récords.
+
+La tabla debe almacenar como mínimo:
+
+* Posición.
+* Nombre del jugador.
+* Puntuación.
+* Nivel alcanzado.
+
+Ejemplo:
+
+RÉCORDS
+
+1. CHRIST       2450    NIVEL 12
+2. ALE          2100    NIVEL 10
+3. PLAYER       1850    NIVEL 9
+
+La tabla debe:
+
+* Ordenarse automáticamente de mayor a menor puntuación.
+* Guardar múltiples jugadores.
+* Permitir que un mismo jugador aparezca en diferentes partidas si obtiene diferentes puntuaciones, o manejar el registro de forma razonable.
+* Mostrar solamente una cantidad limitada de mejores puntuaciones, por ejemplo las 10 mejores.
+* Mantener los récords después de cerrar y volver a abrir el juego.
+
+## 6. Persistencia de los récords
+
+Guardar la información de los récords en un archivo local.
+
+Preferiblemente utilizar un formato sencillo como JSON.
+
+Por ejemplo:
+
+assets/data/records.json
+
+El juego debe:
+
+* Crear el archivo si todavía no existe.
+* Leer los récords al iniciar.
+* Agregar el resultado al finalizar una partida.
+* Ordenar los resultados.
+* Guardar nuevamente los datos.
+* Manejar correctamente un archivo vacío o con información incorrecta sin provocar que el juego se cierre inesperadamente.
+
+No utilizar bases de datos externas.
+
+## 7. Tabla de récords en el menú principal
+
+Agregar una opción "Récords" al menú principal.
+
+El jugador debe poder entrar a una pantalla donde pueda consultar la tabla de mejores puntuaciones.
+
+También puede mostrarse una versión resumida de los mejores récords directamente en el menú principal si el diseño lo permite.
+
+La navegación debe ser:
+
+MENÚ PRINCIPAL
+
+[ JUGAR ]
+[ RÉCORDS ]
+[ CONTROLES ]
+[ SALIR ]
+
+Y desde RÉCORDS:
+
+[ VOLVER ]
+
+El botón "VOLVER" debe regresar correctamente al menú principal.
+
+## 8. Pulido final
+
+Realiza una revisión general del juego para mejorar:
+
+* Consistencia visual.
+* Tamaños y posiciones de textos.
+* Espaciado de botones.
+* Legibilidad.
+* Transiciones entre pantallas.
+* Comportamiento de los botones.
+* Controles.
+* Mensajes de Game Over.
+* Mensajes de pausa.
+* Flujo completo desde el menú hasta una partida.
+* Reinicio de partidas.
+* Registro de puntuaciones.
+* Regreso al menú.
+
+Evita agregar funcionalidades innecesarias.
+
+## 9. Validación final
+
+Antes de terminar, comprueba todo el flujo:
+
+1. Abrir el juego.
+2. Mostrar el menú principal.
+3. Ingresar a Controles.
+4. Leer correctamente los controles.
+5. Regresar al menú.
+6. Ingresar el nombre del jugador.
+7. Comenzar una partida.
+8. Utilizar ← → ↑ ↓.
+9. Presionar ESC y comprobar que la partida se pausa en lugar de cerrarse.
+10. Continuar la partida.
+11. Provocar un Game Over.
+12. Guardar la puntuación.
+13. Comprobar que el jugador aparece en la tabla de récords.
+14. Cerrar y volver a abrir el juego.
+15. Comprobar que los récords siguen almacenados.
+16. Entrar nuevamente a Récords desde el menú.
+17. Regresar correctamente al menú.
+18. Comprobar que la opción Salir funciona.
+
+Mantén todas las funcionalidades existentes que ya funcionan correctamente.
+
+Al finalizar, explica brevemente los cambios realizados y cualquier limitación que haya quedado.
+
+------------- 8vo promt -------------
+
+Continuemos trabajando sobre la versión actual de "Road Escape".
+
+Durante la prueba final apareció el siguiente error:
+
+```text
+AttributeError: module 'pygame' has no attribute 'K_M'. Did you mean: 'K_m'?
+```
+
+El error se produce porque el código utiliza:
+
+```python
+pygame.K_M
+```
+
+cuando Pygame utiliza:
+
+```python
+pygame.K_m
+```
+
+Quiero que esta corrección se realice de forma completa en todo el proyecto y que se revise el sistema de entrada de teclado para evitar errores similares.
+
+### 1. Revisar todas las teclas utilizadas
+
+Busca en todo el código todas las referencias relacionadas con:
+
+```python
+pygame.K_
+```
+
+y comprueba que cada constante utilizada exista realmente en Pygame.
+
+Presta especial atención a posibles errores relacionados con mayúsculas y minúsculas, por ejemplo:
+
+```python
+pygame.K_M
+pygame.K_R
+pygame.K_ESC
+```
+
+No asumas que las constantes de Pygame utilizan letras mayúsculas.
+
+Utiliza las constantes oficiales correspondientes, por ejemplo:
+
+```python
+pygame.K_m
+pygame.K_r
+pygame.K_ESCAPE
+```
+
+Corrige todas las apariciones incorrectas, no solamente la línea que produjo el error actual.
+
+### 2. Revisar todo el sistema de controles
+
+Comprueba que funcionen correctamente:
+
+* ← → para movimiento lateral.
+* ↑ ↓ para movimiento adelante y atrás.
+* ESC para pausar.
+* R para reiniciar después de Game Over.
+* M si se utiliza para alguna función del juego.
+* Enter/Espacio para seleccionar opciones del menú, si están implementados.
+
+Cada tecla debe utilizar una constante válida de Pygame.
+
+### 3. Evitar cierres accidentales
+
+Revisa especialmente el manejo de:
+
+```python
+pygame.QUIT
+pygame.KEYDOWN
+pygame.KEYUP
+```
+
+El juego solamente debe cerrarse cuando:
+
+* El usuario cierre la ventana.
+* El usuario seleccione "Salir" desde el menú.
+
+Presionar ESC durante una partida NO debe cerrar el juego.
+
+ESC debe utilizarse exclusivamente para activar/desactivar la pausa durante la partida, según el flujo actual.
+
+### 4. Mantener el funcionamiento de los controles
+
+No cambies innecesariamente la lógica de movimiento que ya funciona.
+
+El jugador debe poder utilizar:
+
+```text
+↑     Adelante
+↓     Atrás
+←     Izquierda
+→     Derecha
+```
+
+El movimiento debe mantenerse dentro de los límites de la zona jugable.
+
+### 5. Revisión general del código
+
+Realiza una revisión del archivo `main.py` completo para detectar:
+
+* Constantes de Pygame inexistentes.
+* Errores de mayúsculas/minúsculas.
+* Eventos de teclado mal gestionados.
+* Teclas que puedan provocar cierres inesperados.
+* Funciones que puedan generar errores al cambiar de pantalla.
+* Botones sin funcionalidad.
+* Problemas al regresar al menú.
+* Problemas al reiniciar una partida.
+* Problemas al pausar y continuar.
+* Problemas al guardar o cargar los récords.
+
+No elimines funcionalidades que ya funcionan.
+
+### 6. Validación de todas las pantallas
+
+Comprueba el siguiente flujo completo:
+
+1. Iniciar el juego.
+2. Menú principal.
+3. Entrar a Controles.
+4. Verificar que los controles sean legibles.
+5. Regresar al menú.
+6. Entrar a Récords.
+7. Regresar al menú.
+8. Ingresar el nombre del jugador.
+9. Iniciar una partida.
+10. Probar ← → ↑ ↓.
+11. Presionar ESC.
+12. Confirmar que el juego entra en pausa y NO se cierra.
+13. Continuar la partida.
+14. Provocar Game Over.
+15. Reiniciar con R.
+16. Regresar al menú.
+17. Comprobar que la puntuación se guarda correctamente.
+18. Comprobar que la tabla de récords funciona.
+19. Cerrar el juego desde "Salir".
+20. Volver a abrirlo y comprobar que los récords continúan guardados.
+
+### 7. Importante
+
+No quiero únicamente que corrijas la línea que produjo el error.
+
+Quiero que revises todas las referencias de teclado del proyecto y corrijas cualquier uso incorrecto de constantes de Pygame para evitar que aparezcan errores similares posteriormente.
+
+Si existe una forma más segura y clara de organizar el manejo de teclas, puedes aplicarla, siempre que:
+
+* Sea compatible con Pygame.
+* Mantenga los controles actuales.
+* No agregue complejidad innecesaria.
+* Sea fácil de entender.
+
+Al finalizar, indica:
+
+* Qué errores de teclado encontraste.
+* Qué líneas o secciones fueron corregidas.
+* Qué método utilizaste para manejar las teclas.
+* Qué pruebas realizaste.
+* Si existe alguna limitación pendiente.
+
