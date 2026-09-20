@@ -2,6 +2,7 @@
 Mini juego 2D de carreras desarrollado con Python y asistencia de IA
 
 ------------- 1er promt -------------
+
 Quiero desarrollar un mini-juego 2D de carreras en Python utilizando pygame.
 
 La idea es que el jugador controle un automóvil que circula por una carretera vertical y debe esquivar otros vehículos que aparecen desde la parte superior de la pantalla.
@@ -20,6 +21,7 @@ No agregues todavía enemigos, colisiones, puntuación, sonidos ni menú.
 Utiliza código sencillo y comenta las partes importantes para que pueda comprender cómo funciona cada sección.
 
 ------------- 2do promt -------------
+
 Continuemos con el mini-juego 2D de carreras desarrollado en Python utilizando pygame.
 
 Actualmente el juego ya cuenta con:
@@ -119,3 +121,60 @@ No agregues todavía:
 Quiero que mantengas las funcionalidades que ya existen y que el código siga siendo sencillo de entender.
 
 También quiero que indiques brevemente qué partes del código modificaste para solucionar los problemas encontrados y por qué realizaste esos cambios.
+
+------------- 4to promt -------------
+
+Continuemos trabajando sobre la versión actual del mini-juego 2D de carreras desarrollado en Python utilizando pygame.
+
+La mecánica principal ya funciona correctamente: el jugador puede controlar su automóvil, aparecen vehículos enemigos de manera aleatoria, existe una posibilidad razonable de esquivarlos y las colisiones provocan el Game Over.
+
+Ahora quiero realizar una nueva iteración enfocada principalmente en mejorar el apartado visual.
+
+### Automóviles
+
+Los vehículos actuales se ven demasiado simples. Quiero que tanto el automóvil del jugador como los vehículos enemigos tengan una apariencia más reconocible como automóviles.
+
+Sin utilizar imágenes externas todavía, mejora los vehículos utilizando formas básicas de pygame:
+
+* Carrocería.
+* Ventanas delanteras y traseras.
+* Llantas.
+* Luces delanteras y traseras.
+* Parachoques.
+* Diferentes colores para distinguir los vehículos enemigos.
+* El vehículo del jugador debe ser fácilmente identificable.
+
+Los vehículos deben conservar sus dimensiones y comportamiento actuales para no romper las colisiones ni el movimiento.
+
+### Carretera
+
+Mejora visualmente la carretera:
+
+* Agregar líneas divisorias entre carriles.
+* Agregar bordes de la carretera.
+* Crear un efecto visual de movimiento para las líneas.
+* Agregar un entorno sencillo a ambos lados de la carretera.
+* Mantener una apariencia limpia y coherente.
+
+### Interfaz
+
+Mejora la interfaz sin agregar todavía un menú principal completo:
+
+* Mostrar claramente el nombre del juego.
+* Crear una pequeña zona para información del jugador.
+* Mejorar el diseño del mensaje de Game Over.
+* Mostrar instrucciones básicas de los controles.
+* Mantener una interfaz sencilla y fácil de leer.
+
+### Requisitos importantes
+
+* No utilizar imágenes externas todavía.
+* No cambiar la lógica de movimiento existente.
+* No eliminar las mecánicas que ya funcionan.
+* No modificar innecesariamente el sistema de generación de enemigos.
+* Mantener las colisiones funcionando correctamente.
+* Mantener el código organizado y fácil de entender.
+* Comentar las partes nuevas o modificadas.
+* Priorizar formas y elementos gráficos dibujados directamente con pygame.
+
+Antes de finalizar, explica brevemente qué cambios realizaste y qué partes del código fueron modificadas.

@@ -82,80 +82,91 @@ class EnemyCar:
 # Funciones de dibujo
 # ---------------------------
 def draw_vehicle(screen, rect, color, is_player):
-    """Dibuja un vehículo genérico con techo, ventanas y focos."""
+    """Dibuja un auto con forma más reconocible, manteniendo el tamaño y hitbox actuales."""
     x, y, width, height = rect
 
-    # Sombra para dar profundidad
-    shadow = pygame.Rect(x + 5, y + 6, width, height)
-    pygame.draw.rect(screen, (0, 0, 0), shadow, border_radius=12)
+    # Sombra para dar sensación de profundidad
+    shadow = pygame.Rect(x + 4, y + 6, width, height)
+    pygame.draw.rect(screen, (0, 0, 0), shadow, border_radius=14)
 
-    # Cuerpo principal
-    pygame.draw.rect(screen, color, rect, border_radius=12)
+    # Carrocería principal
+    body = pygame.Rect(x, y, width, height)
+    pygame.draw.rect(screen, color, body, border_radius=14)
 
-    # Carrocería más oscura para resaltar contornos
-    body_dark = pygame.Rect(x + 8, y + 10, width - 16, height - 20)
-    pygame.draw.rect(screen, tuple(max(0, c - 25) for c in color), body_dark, border_radius=10)
+    # Zona de motor y maletero para dar forma de auto
+    pygame.draw.rect(screen, tuple(max(0, c - 18) for c in color), (x + 7, y + 12, width - 14, height - 26), border_radius=12)
 
-    # Ventanas
-    window_color = (190, 220, 255) if is_player else (230, 230, 230)
-    pygame.draw.rect(screen, window_color, (x + 10, y + 14, width - 20, 22), border_radius=6)
-    pygame.draw.rect(screen, window_color, (x + 14, y + 38, width - 28, 18), border_radius=5)
+    # Techo y parabrisas
+    window_color = (198, 220, 255) if is_player else (220, 224, 230)
+    roof = pygame.Rect(x + 10, y + 14, width - 20, 22)
+    pygame.draw.rect(screen, window_color, roof, border_radius=6)
+    pygame.draw.rect(screen, window_color, (x + 12, y + 38, width - 24, 16), border_radius=5)
 
-    # Focos
+    # Parachoques
+    front_bumper = pygame.Rect(x + width - 6, y + 18, 6, height - 36)
+    rear_bumper = pygame.Rect(x, y + 18, 6, height - 36)
+    pygame.draw.rect(screen, (80, 80, 80), front_bumper, border_radius=3)
+    pygame.draw.rect(screen, (80, 80, 80), rear_bumper, border_radius=3)
+
+    # Faros delanteros y traseros
     if is_player:
-        headlight_color = (255, 255, 180)
-        tail_light_color = (255, 90, 90)
+        headlight_color = (255, 248, 170)
+        taillight_color = (255, 90, 90)
     else:
-        headlight_color = (255, 210, 120)
-        tail_light_color = (255, 80, 80)
+        headlight_color = (255, 220, 120)
+        taillight_color = (255, 80, 80)
 
     pygame.draw.rect(screen, headlight_color, (x + 10, y + 8, 10, 8), border_radius=3)
     pygame.draw.rect(screen, headlight_color, (x + width - 20, y + 8, 10, 8), border_radius=3)
-    pygame.draw.rect(screen, tail_light_color, (x + 10, y + height - 18, 10, 8), border_radius=3)
-    pygame.draw.rect(screen, tail_light_color, (x + width - 20, y + height - 18, 10, 8), border_radius=3)
+    pygame.draw.rect(screen, taillight_color, (x + 10, y + height - 18, 10, 8), border_radius=3)
+    pygame.draw.rect(screen, taillight_color, (x + width - 20, y + height - 18, 10, 8), border_radius=3)
 
-    # Ruedas
+    # Llantas más grandes y visibles
     wheel_color = (20, 20, 20)
-    wheel_offset = 12
     wheel_size = 9
-    pygame.draw.rect(screen, wheel_color, (x + 8, y + 10, wheel_size, wheel_size), border_radius=2)
-    pygame.draw.rect(screen, wheel_color, (x + width - 18, y + 10, wheel_size, wheel_size), border_radius=2)
-    pygame.draw.rect(screen, wheel_color, (x + 8, y + height - 20, wheel_size, wheel_size), border_radius=2)
-    pygame.draw.rect(screen, wheel_color, (x + width - 18, y + height - 20, wheel_size, wheel_size), border_radius=2)
+    wheel_positions = [
+        (x + 8, y + 10),
+        (x + width - 18, y + 10),
+        (x + 8, y + height - 20),
+        (x + width - 18, y + height - 20),
+    ]
+    for wx, wy in wheel_positions:
+        pygame.draw.rect(screen, wheel_color, (wx, wy, wheel_size, wheel_size), border_radius=2)
+
+    # Línea superior para diferenciar el jugador del resto
+    if is_player:
+        pygame.draw.rect(screen, (255, 255, 255), (x + 14, y + 16, width - 28, 3), border_radius=2)
 
 
 def draw_background(screen, road_scroll_y):
-    """Pinta un fondo de carretera con detalles simples pero más vistosos."""
+    """Pinta un entorno de carretera con bordes, carriles y detalles laterales."""
     screen.fill(BLACK)
 
-    # Paisaje lejano: montañas y árboles estilizados
-    mountain_color = (30, 40, 55)
-    for i in range(0, WIDTH + 80, 90):
-        pts = [(i, 220), (i + 40, 130), (i + 80, 220)]
+    # Fondo basado en montañas para dar sensación de paisaje
+    mountain_color = (28, 36, 50)
+    for i in range(-20, WIDTH + 80, 90):
+        pts = [(i, 220), (i + 30, 140), (i + 60, 220)]
         pygame.draw.polygon(screen, mountain_color, pts)
 
-    # Línea superior de la carretera para dar profundidad
+    # Barreras laterales y carretera principal
     road_left = (WIDTH - ROAD_WIDTH) // 2
     road_right = road_left + ROAD_WIDTH
 
-    # Laterales de la carretera
     pygame.draw.rect(screen, ROAD_EDGE, (road_left - 28, 0, 28, HEIGHT))
     pygame.draw.rect(screen, ROAD_EDGE, (road_right, 0, 28, HEIGHT))
-
-    # Base de la carretera
     pygame.draw.rect(screen, ROAD_SURFACE, (road_left, 0, ROAD_WIDTH, HEIGHT))
 
-    # Borde pintado de la carretera
+    # Bordes de la carretera para separarla del entorno
     pygame.draw.rect(screen, ACCENT, (road_left - 2, 0, 2, HEIGHT))
     pygame.draw.rect(screen, ACCENT, (road_right, 0, 2, HEIGHT))
 
-    # Carriles visibles
+    # Línea divisoria de carriles más visibles
     lane_width = ROAD_WIDTH / LANE_COUNT
     for i in range(1, LANE_COUNT):
         lane_x = road_left + i * lane_width
         pygame.draw.line(screen, LANE_LINE, (lane_x, 0), (lane_x, HEIGHT), 3)
 
-    # Líneas de referencia para simular movimiento
+    # Líneas de movimiento con efecto visual de desplazamiento
     stripe_height = 34
     stripe_width = 10
     for y in range(-60, HEIGHT + 60, 60):
@@ -164,50 +175,63 @@ def draw_background(screen, road_scroll_y):
             lane_x = road_left + (i + 1) * lane_width
             pygame.draw.rect(screen, LANE_LINE, (lane_x - stripe_width // 2, draw_y, stripe_width, stripe_height), border_radius=3)
 
-    # Detalles laterales: postes o faroles pequeños
-    for offset in range(0, HEIGHT + 50, 90):
+    # Elementos del entorno a los lados de la carretera
+    side_color = (70, 90, 75)
+    for offset in range(0, HEIGHT + 60, 90):
         y = (offset + road_scroll_y * 2) % (HEIGHT + 90)
-        pygame.draw.rect(screen, (180, 180, 180), (road_left - 18, y, 6, 22), border_radius=2)
-        pygame.draw.rect(screen, (180, 180, 180), (road_right + 12, y, 6, 22), border_radius=2)
+        tree_x_left = road_left - 28
+        tree_x_right = road_right + 18
 
-    # Pequeñas marcas de borde para mejorar la estética
+        pygame.draw.rect(screen, (135, 135, 135), (tree_x_left, y + 8, 5, 22), border_radius=2)
+        pygame.draw.rect(screen, side_color, (tree_x_left - 12, y, 18, 18), border_radius=9)
+        pygame.draw.rect(screen, (120, 120, 120), (tree_x_right, y + 8, 5, 22), border_radius=2)
+        pygame.draw.rect(screen, side_color, (tree_x_right - 6, y, 18, 18), border_radius=9)
+
+    # Señales simples para dar más profundidad visual
     for y in range(0, HEIGHT + 40, 80):
         pygame.draw.rect(screen, (200, 200, 200), (road_left - 10, y, 6, 26), border_radius=3)
         pygame.draw.rect(screen, (200, 200, 200), (road_right + 4, y, 6, 26), border_radius=3)
 
 
 def draw_hud(screen, is_game_over):
-    """Muestra una pequeña interfaz informativa sin complicar la pantalla."""
-    panel = pygame.Rect(0, 0, WIDTH, 46)
+    """Muestra una interfaz ligera con el nombre del juego y las instrucciones básicas."""
+    panel = pygame.Rect(0, 0, WIDTH, 50)
     pygame.draw.rect(screen, HUD_BG, panel)
 
     title_font = pygame.font.SysFont("arial", 18, bold=True)
-    info_font = pygame.font.SysFont("arial", 12)
+    info_font = pygame.font.SysFont("arial", 11)
 
     title = title_font.render("ROAD ESCAPE", True, TEXT_COLOR)
     status = "RUNNING" if not is_game_over else "GAME OVER"
     status_text = info_font.render(status, True, ACCENT if not is_game_over else (255, 90, 90))
+    controls = info_font.render("← → mover   R reiniciar   ESC salir", True, (210, 210, 210))
 
-    screen.blit(title, (18, 12))
-    screen.blit(status_text, (WIDTH - 120, 16))
+    screen.blit(title, (18, 14))
+    screen.blit(status_text, (WIDTH - 110, 18))
+    screen.blit(controls, (150, 18))
 
 
 def draw_game_over(screen):
-    """Muestra la pantalla de fin de partida con mensaje y opción de reinicio."""
+    """Muestra una pantalla de fin de partida más clara y legible."""
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 140))
+    overlay.fill((0, 0, 0, 150))
     screen.blit(overlay, (0, 0))
+
+    header = pygame.Rect(70, 220, WIDTH - 140, 180)
+    pygame.draw.rect(screen, (30, 30, 35), header, border_radius=18)
+    pygame.draw.rect(screen, (255, 90, 90), header, 2, border_radius=18)
 
     font_big = pygame.font.SysFont("arial", 42, bold=True)
     font_small = pygame.font.SysFont("arial", 20)
+    small_font = pygame.font.SysFont("arial", 16)
 
-    title = font_big.render("GAME OVER", True, (255, 100, 100))
+    title = font_big.render("GAME OVER", True, (255, 110, 110))
     restart = font_small.render("Presiona R para reiniciar", True, WHITE)
-    quit_msg = font_small.render("ESC para salir", True, WHITE)
+    quit_msg = small_font.render("ESC para salir", True, (220, 220, 220))
 
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 50))
-    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, HEIGHT // 2 + 10))
-    screen.blit(quit_msg, (WIDTH // 2 - quit_msg.get_width() // 2, HEIGHT // 2 + 45))
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 255))
+    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, 325))
+    screen.blit(quit_msg, (WIDTH // 2 - quit_msg.get_width() // 2, 360))
 
 
 # ---------------------------
